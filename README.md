@@ -12,6 +12,10 @@ This Arduino project monitors a 24V LiFePO4 battery using an Arduino UNO and a r
 - Battery positive connected through the divider to `A0`
 - Common ground between the battery divider and Arduino
 
+## Board Compatibility
+
+In my lab setup, I use an Arduino UNO. Other MCU boards may also work, such as ESP32 or other Arduino-compatible boards, but you must adjust the analog input pin, ADC reference voltage, and safe maximum input voltage for the board you use.
+
 ## How It Works
 
 The sketch averages multiple ADC samples from `A0`, converts the ADC value to the measured Arduino input voltage, then multiplies by the voltage divider ratio to estimate the real battery voltage.
