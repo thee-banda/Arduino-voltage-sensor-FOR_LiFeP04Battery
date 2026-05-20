@@ -29,7 +29,6 @@ It also calculates a simple linear battery percentage using these thresholds:
 ## Files
 
 - `Voltage-based-Battery-estimation.ino` - main Arduino sketch
-- `LEDDisplay.ino` - reserved for future LED or display output code
 - `AGENTS.md` - contributor guidelines for this repository
 
 ## Usage

@@ -5,7 +5,6 @@
 This repository is an Arduino sketch for voltage-based LiFePO4 battery estimation.
 
 - `Voltage-based-Battery-estimation.ino` contains the main sketch: pin setup, voltage-divider constants, ADC averaging, battery percentage calculation, status classification, and serial output.
-- `LEDDisplay.ino` is currently empty and should be used for display-specific code if LED or screen output is added.
 - Keep additional Arduino source files in this sketch folder as `.ino`, `.h`, or `.cpp` files. Place reusable helpers in clearly named modules, for example `BatteryMath.h` or `DisplayOutput.cpp`.
 - No automated test directory or asset directory exists yet.
 
