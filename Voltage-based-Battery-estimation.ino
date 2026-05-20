@@ -42,7 +42,12 @@ const float VOLTAGE_OVER = 29.2; // V
 // ADC AVERAGING SETTINGS
 // -------------------------------------------------
 const int SAMPLE_COUNT = 10;
-const int SAMPLE_DELAY = 10;
+const int SAMPLE_DELAY = 1;
+
+// -------------------------------------------------
+// BATTERY PERCENT SMOOTHING SETTINGS
+// -------------------------------------------------
+const int PERCENT_HISTORY_COUNT = 10;
 
 // -------------------------------------------------
 // GLOBAL VARIABLES
@@ -52,6 +57,11 @@ int adcValue = 0;
 float a0Voltage = 0.0;
 float batteryVoltage = 0.0;
 float batteryPercent = 0.0;
+int stableBatteryPercent = 0;
+
+int percentHistory[PERCENT_HISTORY_COUNT];
+int percentHistoryIndex = 0;
+int percentHistoryCount = 0;
 
 String batteryStatus = "";
 
@@ -81,6 +91,8 @@ void loop() {
 
   // Calculate battery percentage
   batteryPercent = calculateBatteryPercent(batteryVoltage);
+  addBatteryPercentReading((int)(batteryPercent + 0.5));
+  stableBatteryPercent = calculateStableBatteryPercent();
 
   // Get battery status
   batteryStatus = getBatteryStatus(batteryVoltage);
@@ -134,6 +146,51 @@ float calculateBatteryPercent(float voltage) {
 }
 
 // =================================================
+// ADD BATTERY PERCENT READING TO HISTORY
+// =================================================
+void addBatteryPercentReading(int percent) {
+
+  percentHistory[percentHistoryIndex] = percent;
+  percentHistoryIndex = (percentHistoryIndex + 1) % PERCENT_HISTORY_COUNT;
+
+  if (percentHistoryCount < PERCENT_HISTORY_COUNT) {
+    percentHistoryCount++;
+  }
+}
+
+// =================================================
+// CALCULATE STABLE BATTERY PERCENTAGE
+// =================================================
+int calculateStableBatteryPercent() {
+
+  int bestPercent = percentHistory[0];
+  int bestCount = 0;
+
+  for (int i = 0; i < percentHistoryCount; i++) {
+
+    int historyIndex =
+        (percentHistoryIndex - percentHistoryCount + i + PERCENT_HISTORY_COUNT) %
+        PERCENT_HISTORY_COUNT;
+    int candidatePercent = percentHistory[historyIndex];
+    int candidateCount = 0;
+
+    for (int j = 0; j < percentHistoryCount; j++) {
+
+      if (percentHistory[j] == candidatePercent) {
+        candidateCount++;
+      }
+    }
+
+    if (candidateCount >= bestCount) {
+      bestPercent = candidatePercent;
+      bestCount = candidateCount;
+    }
+  }
+
+  return bestPercent;
+}
+
+// =================================================
 // GET BATTERY STATUS
 // =================================================
 // GET BATTERY STATUS
@@ -163,7 +220,7 @@ String getBatteryStatus(float voltage) {
 // Serial 9600 OUTPUT:
 void displayBatteryData() {
 
-  Serial.println(F("================================"));
+/* Serial.println(F("================================"));
   Serial.println(F("      LiFePO4 Battery Monitor"));
   Serial.println(F("================================"));
 
@@ -177,9 +234,9 @@ void displayBatteryData() {
   Serial.print(F("Battery Voltage : "));
   Serial.print(batteryVoltage, 2);
   Serial.println(F(" V"));
-
+*/
   Serial.print(F("Battery Percent : "));
-  Serial.print(batteryPercent, 0);
+  Serial.print(stableBatteryPercent);
   Serial.println(F(" %"));
 
   Serial.println();
