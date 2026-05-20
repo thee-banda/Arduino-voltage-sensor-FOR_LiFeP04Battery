@@ -9,6 +9,7 @@ This Arduino project monitors a 24V LiFePO4 battery using an Arduino UNO and a r
 - Resistor `R1 = 56k ohm`
 - Resistor `R2 = 10k ohm`
 - Capacitor `104` / `0.1 uF` for analog input filtering
+- In my lab, I use a `1 uF` capacitor, but I suggest using a `0.1 uF` capacitor for this filter.
 - Battery positive connected through the divider to `A0`
 - Common ground between the battery divider and Arduino
 
