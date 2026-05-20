@@ -6,9 +6,9 @@ This Arduino project monitors a 24V LiFePO4 battery using an Arduino UNO and a r
 
 - Arduino UNO
 - 24V LiFePO4 battery pack
-- Voltage divider:
-  - `R1 = 56k ohm`
-  - `R2 = 10k ohm`
+- Resistor `R1 = 56k ohm`
+- Resistor `R2 = 10k ohm`
+- Capacitor `104` / `0.1 uF` for analog input filtering
 - Battery positive connected through the divider to `A0`
 - Common ground between the battery divider and Arduino
 
