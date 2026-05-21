@@ -25,11 +25,25 @@ It also calculates a simple linear battery percentage using these thresholds:
 
 | Status | Voltage |
 | --- | --- |
-| Full | `30.0V` |
+| Full | `26.65V` |
 | Low | `< 25.6V` |
 | Warning low | `< 24.8V` |
 | Critical low | `<= 24.0V` |
 | Over voltage | `> 29.2V` |
+
+`26.65V` is the calibrated full-charge value from my lab test when the charger adapter status changed to green.
+
+## Important Functions
+
+- `readAverageADC(pin)` reads analog pin `A0` multiple times and returns the average ADC value. This reduces noise before voltage conversion.
+- `adcToVoltage(adc)` converts the raw Arduino ADC value into the measured voltage at `A0`.
+- `calculateBatteryPercent(voltage)` converts battery voltage into a simple percent value using `VOLTAGE_EMPTY` and `VOLTAGE_FULL`, then limits the result between `0%` and `100%`.
+- `addBatteryPercentReading(percent)` saves the latest rounded percent into a history buffer. The buffer size is controlled by `PERCENT_HISTORY_COUNT`.
+- `calculateStableBatteryPercent()` checks the recent percent history and displays the most common integer value. For example, if the values are `18, 18, 17, 18, 19`, the display stays at `18`.
+- `getBatteryStatus(voltage)` returns a text status such as `NORMAL`, `LOW BATTERY`, `WARNING LOW`, `CRITICAL LOW`, or `OVER VOLTAGE`.
+- `displayBatteryData()` prints the current ADC value, measured `A0` voltage, estimated battery voltage, and stable battery percentage to Serial Monitor.
+
+The experimental `handleDisplayPercentError()` logic is currently commented out in the sketch. It is kept as a reference for detecting one-sample display bounces such as `18 -> 19 -> 18`.
 
 ## Files
 

@@ -5,13 +5,14 @@
 
    R1 = 56kΩ
    R2 = 10kΩ
+   Capacitor 0.1uF / BUT that now I am only using 1.0uF before. :D
 ==================================================
 */
 
 // -------------------------------------------------
 // PIN CONFIGURATION
 // -------------------------------------------------
-const byte BATTERY_PIN = A0;
+const byte BATTERY_PIN = A0; 
 
 // -------------------------------------------------
 // VOLTAGE DIVIDER CONFIGURATION
@@ -26,17 +27,16 @@ const float DIVIDER_RATIO = (R1 + R2) / R2;
 // ADC CONFIGURATION
 // -------------------------------------------------
 const float ADC_REF = 5.0;
-const int ADC_MAX = 1023;
+const int ADC_MAX   = 1023;
 
 // -------------------------------------------------
 // BATTERY VOLTAGE THRESHOLDS
 // -------------------------------------------------
-const float VOLTAGE_FULL = 30;      // V
-const float   VOLTAGE_LOW = 25.6;     // V
-const float VOLTAGE_WARNING = 24.8; // V
-const float VOLTAGE_EMPTY =
-    24.0; // V  // Fixed typo (removed stray period) and added comment
-const float VOLTAGE_OVER = 29.2; // V
+const float VOLTAGE_FULL    = 26.65;   // V
+const float VOLTAGE_LOW     = 25.6;    // V
+const float VOLTAGE_WARNING = 24.8;    // V
+const float VOLTAGE_EMPTY   = 24.0;    // V  // Fixed typo (removed stray period) and added comment
+const float VOLTAGE_OVER    = 29.2;    // V
 
 // -------------------------------------------------
 // ADC AVERAGING SETTINGS
@@ -54,14 +54,19 @@ const int PERCENT_HISTORY_COUNT = 10;
 // -------------------------------------------------
 int adcValue = 0;
 
-float a0Voltage = 0.0;
-float batteryVoltage = 0.0;
-float batteryPercent = 0.0;
+float a0Voltage          = 0.0;
+float batteryVoltage     = 0.0;
+float batteryPercent     = 0.0;
 int stableBatteryPercent = 0;
 
 int percentHistory[PERCENT_HISTORY_COUNT];
-int percentHistoryIndex = 0;
-int percentHistoryCount = 0;
+int percentHistoryIndex  = 0;
+int percentHistoryCount  = 0;
+
+// int lastDisplayPercent      = -1; // Store the last accepted stable percent.
+// int possibleErrorPercent    = -1; // Store one possible bounce value before accepting it.
+// int possibleErrorRepeatCount = 0; // Count repeated possible values to confirm a real change.
+// unsigned long displayErrors = 0; // Count unstable percent bounces like 18 -> 19 -> 18.
 
 String batteryStatus = "";
 
@@ -91,8 +96,9 @@ void loop() {
 
   // Calculate battery percentage
   batteryPercent = calculateBatteryPercent(batteryVoltage);
-  addBatteryPercentReading((int)(batteryPercent + 0.5));
-  stableBatteryPercent = calculateStableBatteryPercent();
+  addBatteryPercentReading((int)(batteryPercent + 0.5)); // Save the rounded percent into the history buffer.
+  stableBatteryPercent = calculateStableBatteryPercent(); // Pick the most common percent from recent readings.
+  // handleDisplayPercentError(stableBatteryPercent); // Check if the displayed percent bounced and returned.
 
   // Get battery status
   batteryStatus = getBatteryStatus(batteryVoltage);
@@ -120,9 +126,6 @@ int readAverageADC(int pin) {
   return total / SAMPLE_COUNT;
 }
 
-// =================================================
-// CONVERT ADC VALUE TO VOLTAGE
-// =================================================
 // CONVERT ADC VALUE TO VOLTAGE
 // =================================================
 // Convert raw ADC reading to voltage (in volts)
@@ -191,6 +194,49 @@ int calculateStableBatteryPercent() {
 }
 
 // =================================================
+// HANDLE DISPLAY PERCENT ERROR
+// =================================================
+// void handleDisplayPercentError(int currentPercent) {
+
+//   if (lastDisplayPercent < 0) {
+//     lastDisplayPercent = currentPercent; // Initialize the first accepted display percent.
+//     return;
+//   }
+
+//   if (possibleErrorPercent >= 0) {
+
+//     if (currentPercent == lastDisplayPercent) {
+//       displayErrors++; // Count one unstable percent bounce.
+//       possibleErrorPercent = -1; // Clear the possible bounce value after counting it.
+//       possibleErrorRepeatCount = 0; // Reset repeat tracking after the bounce is handled.
+//       return;
+//     }
+
+//     if (currentPercent == possibleErrorPercent) {
+//       possibleErrorRepeatCount++; // Confirm the new value is repeating, not just bouncing.
+//     } else {
+//       lastDisplayPercent = currentPercent; // Accept a different new value as the latest stable percent.
+//       possibleErrorPercent = -1; // Clear the previous possible bounce value.
+//       possibleErrorRepeatCount = 0; // Reset repeat tracking for the new stable value.
+//       return;
+//     }
+
+//     if (possibleErrorRepeatCount >= 2) {
+//       lastDisplayPercent = currentPercent; // Accept the new value after it repeats.
+//       possibleErrorPercent = -1; // Clear the possible value because it is now accepted.
+//       possibleErrorRepeatCount = 0; // Reset repeat tracking after accepting the new value.
+//     }
+
+//     return;
+//   }
+
+//   if (currentPercent != lastDisplayPercent) {
+//     possibleErrorPercent = currentPercent; // Mark this value as a possible one-sample error.
+//     possibleErrorRepeatCount = 1; // Start counting repeats for the possible new value.
+//   }
+// }
+
+// =================================================
 // GET BATTERY STATUS
 // =================================================
 // GET BATTERY STATUS
@@ -216,13 +262,14 @@ String getBatteryStatus(float voltage) {
 
   return "NORMAL";
 }
-
+// =================================================
 // Serial 9600 OUTPUT:
+// =================================================
 void displayBatteryData() {
 
-/* Serial.println(F("================================"));
-  Serial.println(F("      LiFePO4 Battery Monitor"));
-  Serial.println(F("================================"));
+  // Serial.println(F("================================"));
+  // Serial.println(F("      LiFePO4 Battery Monitor"));
+  // Serial.println(F("================================"));
 
   Serial.print(F("ADC Value       : "));
   Serial.println(adcValue);
@@ -234,10 +281,13 @@ void displayBatteryData() {
   Serial.print(F("Battery Voltage : "));
   Serial.print(batteryVoltage, 2);
   Serial.println(F(" V"));
-*/
+
   Serial.print(F("Battery Percent : "));
   Serial.print(stableBatteryPercent);
   Serial.println(F(" %"));
+
+  // Serial.print(F("Errors  : "));
+  // Serial.println(displayErrors); // Print how many percent bounces were detected.
 
   Serial.println();
 }
