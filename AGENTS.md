@@ -8,6 +8,21 @@ This repository is an Arduino sketch for voltage-based LiFePO4 battery estimatio
 - Keep additional Arduino source files in this sketch folder as `.ino`, `.h`, or `.cpp` files. Place reusable helpers in clearly named modules, for example `BatteryMath.h` or `DisplayOutput.cpp`.
 - No automated test directory or asset directory exists yet.
 
+## AGV Integration Context
+
+This repository is a battery-estimation and LCD display component, not the complete AGV sensor controller. Use it as a reference prototype for the larger AGV sketch at `/Users/thee/Documents/Arduino/agv_sensor_v3T.ino/agv_sensor_v3T.ino.ino`.
+
+The full AGV sketch currently uses its own active battery configuration and behavior:
+
+- Battery analog input: `BAT_PIN A0`
+- LCD: `LiquidCrystal_I2C` at address `0x27`
+- Voltage divider constants: `R1 = 300000.0`, `R2 = 28800.0`
+- Percent endpoints: `MIN_BAT_VOLT = 23.8`, `MAX_BAT_VOLT = 30.9`
+- Low-battery output: `TW_Buzzer`
+- Low-battery condition: `battery_display < 5`
+
+Do not copy this component's voltage divider constants, full/empty calibration values, or LCD behavior directly into the AGV sketch without measuring and validating the real AGV hardware. The `26.65V` full/rest value and `24.00V` usable-empty policy in this repository are component-level calibration notes, not confirmed production calibration for `agv_sensor_v3T.ino.ino`.
+
 ## Build, Test, and Development Commands
 
 Use Arduino IDE or Arduino CLI. From this directory:
