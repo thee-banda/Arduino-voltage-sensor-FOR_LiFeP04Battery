@@ -42,17 +42,25 @@ Confirm the voltage divider keeps `A0` below `5V` for the maximum battery voltag
 
 ## NOTE Report Update 1.0
 
-Previously, the sketch displayed real-time percent values immediately. The current code stabilizes the final displayed percent with a majority filter in `calculateStableBatteryPercent()`. `handleDisplayPercentError()` is present in the sketch as experimental error-handling logic, but it is currently commented out and does not run.
+Previously, the sketch displayed real-time percent values immediately. An older stabilization attempt used a majority filter in `calculateStableBatteryPercent()` with `PERCENT_HISTORY_COUNT`, and `handleDisplayPercentError()` was kept as experimental bounce-handling logic. Those older approaches are currently commented out and do not run.
 
-The percent filter uses a sample size of `n`, where `n` is the number of recent loop cycles stored in `PERCENT_HISTORY_COUNT`. In the latest sketch, `PERCENT_HISTORY_COUNT = 10`. When the sensor collects recent percent samples, the most common rounded integer value wins. For example, if `n = 4` and the sampled values are `[x, x, x, y]`, `x` wins and is displayed. The `%` symbol is presentation text only; the filtered percent value is stored as an integer.
+The current implementation calculates the displayed percent from ADC counts in `calculateStableBatteryPercentFromADC()`. Small ADC movement near a percent edge is filtered with `ADC_HYSTERESIS_COUNTS = 2` and `PERCENT_CONFIRM_COUNT = 2`, so noise such as `734 -> 735 -> 734` should keep the same displayed percent. Larger real changes use `PERCENT_SNAP_THRESHOLD = 5`; when the raw ADC-based percent differs from the displayed percent by at least `5%`, the display snaps to the new value immediately so changing to another battery pack does not slowly count down one percent at a time. The `%` symbol is presentation text only; the filtered percent value is stored as an integer.
 
 Problem 1.0 recorded on 20/05/2026 17:03: the initial estimated full-charge voltage range was `29.2V - 30V`, but after the adapter changed to green, the actual measured full battery voltage dropped to approximately `26.65V`.
 
 Solution 1.0: calibrate `VOLTAGE_FULL` to the measured full-charge value. The current sketch sets `VOLTAGE_FULL = 26.65`.
+
+TAICO specification note: TAICO lists charging voltage as `29.2V` and standard voltage as `24V`. This project does not use `29.2V` as `VOLTAGE_FULL` because the measured battery voltage after the adapter turns green is approximately `26.65V`. Therefore, `VOLTAGE_FULL = 26.65V` represents the measured full/rest display voltage, while `29.2V` represents the charger charge voltage.
+
+TAICO end-of-discharge note: available TAICO 24V LiFePO4 reference data lists `29.2V` as maximum charge voltage and `20V` as end-of-discharge voltage. The project intentionally does not use `20V` as display-empty because it represents deep-discharge or protection territory. The intended display-empty / usable-empty policy is `VOLTAGE_EMPTY = 24.00V`, leaving reserve above true end-of-discharge. Do not change `VOLTAGE_EMPTY` down to `20V` unless the project intentionally wants to display usable charge into deep-discharge territory. Current implementation note: the sketch currently sets `VOLTAGE_EMPTY = 24.00V`.
 
 Validation results:
 
 - Step 1.1: Fully charged battery, adapter green, measured battery voltage `~26.65V`; Arduino displayed `Battery Percentage = 100%`.
 - Step 1.2: Partially charged battery, adapter red, measured battery voltage `~24.77V`; Arduino displayed `Battery Percentage = 29%`.
 
-When changing `VOLTAGE_FULL` or `PERCENT_HISTORY_COUNT`, document the measured voltage, adapter color/state, observed displayed percent, and reason for the change.
+Problem 1.2 recorded on 21/05/2026: ADC noise near a percent boundary, for example `734 -> 735 -> 734`, can make the displayed percent bounce if the sketch follows raw real-time values directly. However, forcing every percent change to move only one percent per loop is also wrong for real-time behavior because swapping to another battery pack would make the display slowly count down until it reaches the true value.
+
+Solution 1.2: use ADC-based percent stabilization with two paths. Small changes below `5%` use hysteresis and repeated-direction confirmation to avoid display bounce. Large changes of `5%` or more snap to the new raw ADC-based percent immediately, treating the reading as a real battery state change rather than noise.
+
+When changing `VOLTAGE_FULL`, `VOLTAGE_EMPTY`, `ADC_HYSTERESIS_COUNTS`, `PERCENT_CONFIRM_COUNT`, or `PERCENT_SNAP_THRESHOLD`, document the measured voltage, adapter color/state, observed displayed percent, and reason for the change.
